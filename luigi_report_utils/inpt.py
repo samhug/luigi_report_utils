@@ -19,6 +19,9 @@ class BaseInpt:
     def __exit__(self, exc_type, exc_value, traceback):
         self._handle.close()
 
+    def open(self):
+        raise Exception("this method must be overriden")
+
 
 class FilePathInpt(BaseInpt):
     def __init__(self, path):
