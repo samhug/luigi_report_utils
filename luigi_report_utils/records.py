@@ -4,6 +4,7 @@ import itertools
 
 import pandas
 
+from . import parallel
 
 import logging
 
@@ -168,6 +169,94 @@ def apply_exclusion_list(df, f, match_tuples):
         drop_i = drop_i.append(df[drop_condition].index)
 
     df.drop(index=drop_i, inplace=True)
+
+
+
+def expand_multivalued(df, expansion_paths, drop_mv=True):
+    """
+    Given a DataFrame like the following:
+      ID 	ID_SUB_MV
+      0     [{'ID_SUB': '0', 'VAL': 'a'}, {'ID_SUB': '1', 'VAL': 'b' }, { 'ID_SUB': '2', 'VAL': 'c' }]
+      1     [{'ID_SUB': '0', 'VAL': 'A'}, {'ID_SUB': '1', 'VAL': 'B' }, { 'ID_SUB': '2', 'VAL': 'C' }]
+      2     [{'ID_SUB': '0', 'VAL': '0'}, {'ID_SUB': '1', 'VAL': '1' }, { 'ID_SUB': '2', 'VAL': '2' }]
+
+    > expand_multivalued(df, {
+        'ID_SUB': ('ID_SUB_MV', None, 'ID_SUB'),
+        'VAL':    ('ID_SUB_MV', None, 'VAL'),
+    })
+
+    Will return a DataFrame of the form:
+      ID 	ID_SUB  VAL
+      0     '0'     'a'
+      0     '1'     'b'
+      0     '2'     'c'
+      1     '0'     'A'
+      1     '1'     'B'
+      1     '2'     'C'
+      2     '0'     '0'
+      2     '1'     '1'
+      2     '2'     '2'
+    """
+
+    # Create new blank columns to expand values into
+    new_columns = {new_col: None for new_col, path in expansion_paths.items()}
+    df = df.assign(**new_columns)
+
+    # Custruct list of column names that will be in the output DataFrame
+    target_columns = list(df.columns)
+    if drop_mv:
+        for path in expansion_paths.values():
+            if path[0] in target_columns:
+                target_columns.remove(path[0])
+
+    def _process_row(row):
+        results = []
+        sub_lengths = []
+
+        for col, path in expansion_paths.items():
+            # Step through the key path. None values represent a wildcard
+            val = row[path[0]]
+            for key in path[1:]:
+                if key is None:
+                    sub_lengths.append(len(val))
+                    break
+            else:
+                raise KeyError(
+                    "key path must contain a None value to use as a wildcard"
+                )
+
+        # Constuct a skeleton row containing all keys that will
+        # be in the target DataFrame
+        row_skeleton = row.dict(keys=target_columns)
+
+        for row_i in range(max(sub_lengths)):
+            for col, path in expansion_paths.items():
+
+                # Step through the key path. None values represent a wildcard
+                val = row[path[0]]
+                for key in path[1:]:
+                    if val is None:
+                        continue
+
+                    if key is None:
+                        val = val[row_i] if row_i < len(val) else None
+                    else:
+                        val = val.get(key, None)
+
+                if len(results) <= row_i:
+                    results.append(row_skeleton.copy())
+                results[row_i][col] = val
+
+        return results
+
+    results = parallel.df_apply(df, _process_row, return_df=False)
+    raw_records = itertools.chain.from_iterable(
+        itertools.filterfalse(lambda x: x is None, results)
+    )
+
+    field_defs = [SchemaField(col) for col in target_columns]
+
+    return load_records(raw_records, field_defs)
 
 
 # mappings in the form: [ [ 'index', 'src_name', 'dest_name' ], ... ]

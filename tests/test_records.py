@@ -86,5 +86,114 @@ class TestRecords(unittest.TestCase):
         )
 
 
+class TestExpandMV(unittest.TestCase):
+    def test_basic(self):
+        data_test = """{ "ID": "0", "SUBVAL": [ "0", "1", "2" ] }
+{ "ID": "1", "SUBVAL": [ "0", "1", "2" ] }
+"""
+        data_expected = """{ "ID": "0", "ID_SUB": "0" }
+{ "ID": "0", "ID_SUB": "1" }
+{ "ID": "0", "ID_SUB": "2" }
+{ "ID": "1", "ID_SUB": "0" }
+{ "ID": "1", "ID_SUB": "1" }
+{ "ID": "1", "ID_SUB": "2" }
+"""
+
+        df = records.load_jsonl(
+            inpt.from_str(data_test),
+            [records.SchemaField("ID"), records.SchemaField("SUBVAL"),],
+        )
+
+        df = records.expand_multivalued(df, {"ID_SUB": ["SUBVAL", None],})
+
+        df_expected = records.load_jsonl(
+            inpt.from_str(data_expected),
+            [records.SchemaField("ID"), records.SchemaField("ID_SUB"),],
+        )
+
+        pandas.testing.assert_frame_equal(df_expected, df)
+
+    def test_basic_no_drop(self):
+        data_test = """{ "ID": "0", "SUBVAL": [ "0", "1", "2" ] }
+{ "ID": "1", "SUBVAL": [ "0", "1", "2" ] }
+"""
+        data_expected = """{ "ID": "0", "SUBVAL": [ "0", "1", "2" ], "ID_SUB": "0" }
+{ "ID": "0", "SUBVAL": [ "0", "1", "2" ], "ID_SUB": "1" }
+{ "ID": "0", "SUBVAL": [ "0", "1", "2" ], "ID_SUB": "2" }
+{ "ID": "1", "SUBVAL": [ "0", "1", "2" ], "ID_SUB": "0" }
+{ "ID": "1", "SUBVAL": [ "0", "1", "2" ], "ID_SUB": "1" }
+{ "ID": "1", "SUBVAL": [ "0", "1", "2" ], "ID_SUB": "2" }
+"""
+
+        df = records.load_jsonl(
+            inpt.from_str(data_test),
+            [records.SchemaField("ID"), records.SchemaField("SUBVAL"),],
+        )
+
+        df = records.expand_multivalued(
+            df, {"ID_SUB": ["SUBVAL", None],}, drop_mv=False
+        )
+
+        df_expected = records.load_jsonl(
+            inpt.from_str(data_expected),
+            [
+                records.SchemaField("ID"),
+                records.SchemaField("SUBVAL"),
+                records.SchemaField("ID_SUB"),
+            ],
+        )
+
+        pandas.testing.assert_frame_equal(df_expected, df)
+
+    def test_expand_mid(self):
+        data_test = """{ "ID": "0", "SUBVAL": [ {"ID_SUB":"0"}, {"ID_SUB":"1"}, {"ID_SUB":"2"} ] }
+{ "ID": "1", "SUBVAL": [ {"ID_SUB":"0"}, {"ID_SUB":"1"}, {"ID_SUB":"2"} ] }
+"""
+        data_expected = """{ "ID": "0", "ID_SUB": "0" }
+{ "ID": "0", "ID_SUB": "1" }
+{ "ID": "0", "ID_SUB": "2" }
+{ "ID": "1", "ID_SUB": "0" }
+{ "ID": "1", "ID_SUB": "1" }
+{ "ID": "1", "ID_SUB": "2" }
+"""
+
+        df = records.load_jsonl(
+            inpt.from_str(data_test),
+            [records.SchemaField("ID"), records.SchemaField("SUBVAL"),],
+        )
+
+        df = records.expand_multivalued(df, {"ID_SUB": ["SUBVAL", None, "ID_SUB"],})
+
+        df_expected = records.load_jsonl(
+            inpt.from_str(data_expected),
+            [records.SchemaField("ID"), records.SchemaField("ID_SUB"),],
+        )
+
+        pandas.testing.assert_frame_equal(df_expected, df)
+
+    def test_expand_empty(self):
+        data_test = """{ "ID": "0", "SUBVAL": [] }
+{ "ID": "1", "SUBVAL": [ {"ID_SUB":"0"}, {"ID_SUB":"1"}, {"ID_SUB":"2"} ] }
+"""
+        data_expected = """{ "ID": "1", "ID_SUB": "0" }
+{ "ID": "1", "ID_SUB": "1" }
+{ "ID": "1", "ID_SUB": "2" }
+"""
+
+        df = records.load_jsonl(
+            inpt.from_str(data_test),
+            [records.SchemaField("ID"), records.SchemaField("SUBVAL"),],
+        )
+
+        df = records.expand_multivalued(df, {"ID_SUB": ["SUBVAL", None, "ID_SUB"],})
+
+        df_expected = records.load_jsonl(
+            inpt.from_str(data_expected),
+            [records.SchemaField("ID"), records.SchemaField("ID_SUB"),],
+        )
+
+        pandas.testing.assert_frame_equal(df_expected, df)
+
+
 if __name__ == "__main__":
     unittest.main()
