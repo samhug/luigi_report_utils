@@ -7,7 +7,7 @@ import pandas
 
 import logging
 
-logger = logging.getLogger("luigi_report_utils.records")
+logger = logging.getLogger(f"{__package__}.records")
 
 
 class SchemaField:

@@ -5,7 +5,7 @@ A wrapper for file and string objects that provides an interface compatible with
 import io
 import logging
 
-logger = logging.getLogger("luigi_report_utils.inpt")
+logger = logging.getLogger(f"{__package__}.inpt")
 
 
 class BaseInpt:
