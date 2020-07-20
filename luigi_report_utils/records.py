@@ -4,7 +4,7 @@ import itertools
 
 import pandas
 
-from collections import Iterable
+from collections.abc import Iterable
 
 from . import parallel
 
