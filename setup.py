@@ -9,8 +9,5 @@ setup(
     author="Sam Hug",
     author_email="s@m-h.ug",
     url="https://github.com/samhug/luigi_report_utils",
-    packages=[
-        "luigi_report_utils",
-        "luigi_report_utils.tasks",
-    ],
+    packages=["luigi_report_utils", "luigi_report_utils.tasks",],
 )

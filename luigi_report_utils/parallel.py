@@ -1,6 +1,7 @@
 from pathos.pools import ThreadPool
 from pathos.helpers import cpu_count
 
+
 def df_apply(df, f, pool=None, n_cpus=None, return_df=True):
     """Apply the function `f` to each row in `df` in a parallel fashion.
     """

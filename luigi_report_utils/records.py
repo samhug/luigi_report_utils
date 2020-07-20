@@ -13,12 +13,7 @@ logger = logging.getLogger(f"{__package__}.records")
 
 class SchemaField:
     def __init__(
-        self,
-        name,
-        type=None,
-        transform=None,
-        filter_none=False,
-        none_value="",
+        self, name, type=None, transform=None, filter_none=False, none_value="",
     ):
         self.name = name
         self.type = type

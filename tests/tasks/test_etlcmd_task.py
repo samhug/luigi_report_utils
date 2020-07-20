@@ -27,7 +27,8 @@ class TestEtlcmdTask(unittest.TestCase):
 
         config_file = os.path.join(temp_dir.name, "config.hcl")
         with open(config_file, "w") as f:
-            f.write("""
+            f.write(
+                """
 process "Test Process" {
     input "jsonl" {
         path = "%s"
@@ -36,10 +37,14 @@ process "Test Process" {
         path = "%s"
     }
 }
-""" % (input_file, output_file))
+"""
+                % (input_file, output_file)
+            )
 
         success = luigi.build(
-            [EtlcmdTask(config_file=config_file, output_path=output_file)], workers=1, local_scheduler=True
+            [EtlcmdTask(config_file=config_file, output_path=output_file)],
+            workers=1,
+            local_scheduler=True,
         )
         self.assertTrue(success)
 

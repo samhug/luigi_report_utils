@@ -18,4 +18,4 @@ class EtlcmdTask(ExternalProgramTask):
         super(EtlcmdTask, self).run()
 
     def output(self):
-       return luigi.LocalTarget(path=self.output_path)
+        return luigi.LocalTarget(path=self.output_path)
