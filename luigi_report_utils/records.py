@@ -4,12 +4,19 @@ import itertools
 
 import pandas
 
+from collections import Iterable
+
 from . import parallel
 
 import logging
 
 logger = logging.getLogger(f"{__package__}.records")
 
+# https://github.com/pandas-dev/pandas/blob/b9b081dc6b510c8290ded12fe751b1216843527e/pandas/core/common.py#L286
+def _maybe_make_list(obj):
+    if obj is not None and not isinstance(obj, (tuple, list)):
+        return [obj]
+    return list(obj)
 
 class SchemaField:
     def __init__(
@@ -71,7 +78,8 @@ def load_records(records, field_defs, index=None, pool=None):
             value = src.get(field_def.name, None)
 
             if field_def.transform is not None:
-                value = field_def.transform(value)
+                for f in _maybe_make_list(field_def.transform):
+                    value = f(value)
 
             if field_def.filter_none is True and value is None:
                 return

@@ -53,6 +53,18 @@ class TestRecords(unittest.TestCase):
         self.assertEqual(df.at[0, "B_MV"], "1")
         self.assertEqual(df.at[0, "C"], "2")
 
+    def test_load_jsonl_transform(self):
+        inpt_str = '{"A":"test"}'
+
+        df = records.load_jsonl(
+            inpt.from_str(inpt_str),
+            (
+                records.SchemaField("A", transform=[lambda v: f"{v}-suffix", lambda v: f"prefix-{v}", lambda v: v.upper()]),
+            ),
+        )
+
+        self.assertEqual(df.at[0, "A"], "PREFIX-TEST-SUFFIX")
+
     def test_apply_mappings(self):
         df = pandas.DataFrame(
             {"A_1": range(10), "C_4": range(2, 12), "B_2": range(1, 11)}
