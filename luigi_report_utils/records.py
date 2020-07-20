@@ -26,6 +26,37 @@ class SchemaField:
         self.transform = transform
         self.none_value = none_value
 
+
+def flatten_mv(value):
+    """
+    before:
+    > record = {
+    >     "VALUE_MV": [{"VALUE_MS":[{"VALUE": "hello"}]}],
+    > }
+
+    record['VALUE_MV'] = flatten_mv(record['VALUE_MV'])
+
+    after:
+    > record = {
+    >     "VALUE_MV": "hello",
+    > }
+    """
+    while True:
+        # If the value is a list, assert there is only one item in the list
+        if isinstance(value, list):
+            assert len(value) == 1, f"expected only 1 item, got: {value}"
+            value = value.pop(0)
+
+        # If the value is a dict, assert there is only one item in the dict
+        elif isinstance(value, dict):
+            assert len(value) == 1, f"expected only 1 item, got: {value}"
+            _, value = value.popitem()
+
+        else:
+            break
+    return value
+
+
 def load_records(records, field_defs, index=None, pool=None):
     """ Given an iterator of dictionary records and a list of field deffinitions,
     will return a DataFrame.
