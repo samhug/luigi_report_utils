@@ -37,7 +37,7 @@ class TestRecords(unittest.TestCase):
         self.assertEqual(df.at[0, "B"], "1")
         self.assertEqual(df.at[0, "C"], "2")
 
-    def test_load_jsonl_flatten(self):
+    def test_load_flatten(self):
         inpt_str = '{"A":"0","B_MV":[{"B_MS":[{"B":"1"}]}],"C":"2"}'
 
         df = records.load_jsonl(
@@ -52,6 +52,19 @@ class TestRecords(unittest.TestCase):
         self.assertEqual(df.at[0, "A"], "0")
         self.assertEqual(df.at[0, "B_MV"], "1")
         self.assertEqual(df.at[0, "C"], "2")
+
+    def test_load_flatten_error(self):
+        inpt_str = '{"A":"0","B_MV":[{"B_MS":[{"B":"1"},{"B":"2"}]}],"C":"2"}'
+
+        with self.assertRaises(ValueError):
+            df = records.load_jsonl(
+                inpt.from_str(inpt_str),
+                (
+                    records.SchemaField("A"),
+                    records.SchemaField("B_MV", transform=records.flatten_mv),
+                    records.SchemaField("C"),
+                ),
+            )
 
     def test_load_jsonl_transform(self):
         inpt_str = '{"A":"test"}'

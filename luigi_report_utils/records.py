@@ -30,28 +30,35 @@ class SchemaField:
 
 
 def flatten_mv(value):
-    """
-    before:
-    > record = {
-    >     "VALUE_MV": [{"VALUE_MS":[{"VALUE": "hello"}]}],
-    > }
+    """A field transform helper for use with SchemaField(transform=...)
+    Takes a structured input value and repeatedly flattens single-valued lists, and dictionaries
+    and returns the final value. Will raise a ValueError if it encounters a list or dictionary
+    with more than one value.
 
-    record['VALUE_MV'] = flatten_mv(record['VALUE_MV'])
+    Example:
+        before:
+        > record = {
+        >     "VALUE_MV": [{"VALUE_MS":[{"VALUE": "hello"}]}],
+        > }
 
-    after:
-    > record = {
-    >     "VALUE_MV": "hello",
-    > }
+        record['VALUE_MV'] = flatten_mv(record['VALUE_MV'])
+
+        after:
+        > record = {
+        >     "VALUE_MV": "hello",
+        > }
     """
     while True:
         # If the value is a list, assert there is only one item in the list
         if isinstance(value, list):
-            assert len(value) == 1, f"expected only 1 item, got: {value}"
+            if len(value) > 1:
+                raise ValueError(f"Cannot flatten list: {value}")
             value = value.pop(0)
 
         # If the value is a dict, assert there is only one item in the dict
         elif isinstance(value, dict):
-            assert len(value) == 1, f"expected only 1 item, got: {value}"
+            if len(value) > 1:
+                raise ValueError(f"Cannot flatten dictionary: {value}")
             _, value = value.popitem()
 
         else:
