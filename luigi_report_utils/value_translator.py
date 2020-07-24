@@ -82,9 +82,9 @@ class ValueTranslationTable:
         # any assignments. This is to avoid an accidental double translation.
         defered_assignments = []
         for (match_vals, new_val) in self.valmap.items():
-            defered_assignments.append(
-                (df.index[build_match_cond(match_vals)], newval_col, new_val)
-            )
+            idx = df.index[build_match_cond(match_vals)]
+            if idx.size > 0:
+                defered_assignments.append((idx, newval_col, new_val))
 
         for (idx, col, val) in defered_assignments:
             df.loc[idx, [col]] = val
