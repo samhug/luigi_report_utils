@@ -4,16 +4,40 @@ from collections import OrderedDict
 
 
 class ValueTranslator:
+    """Wraps a set of ValueTranstionTable objects and provides
+    facility to translate row-by-row `ValueTranslator.translate_row(...)`
+    or batch translate all rows in a datafram `ValueTranslator.translate(...)`
+    """
+
     def __init__(self):
         self.translation_tables = OrderedDict()
 
     def add_vtt(self, cols, vtt):
-        # if we're given a single column name, put it in a tuple
+        """Add a ValueTranslationTable
+
+        Example:
+            translator = ValueTranslator()
+
+            # Replace values in colA 
+            translator.add_vtt("colA", ValueTranslationTable({
+                ("A",): "a",
+                ("B",): "b",
+            }))
+
+            # Replace values in colC where colB AND colC match the given values
+            translator.add_vtt(["colB", "colC"], ValueTranslationTable({
+                ("0", "1"): "X",
+                ("1", "4"): "Y",
+            }))
+        """
         if not isinstance(cols, tuple):
             cols = (cols,)
         self.translation_tables[cols] = vtt
 
     def translate_row(self, row):
+        """Given a `RowProxy` or some other dict-like object, apply our translations to it
+        and return the translated row
+        """
         for (match_cols, vtt) in self.translation_tables.items():
             match_tuple = tuple([row[col] for col in match_cols])
             newval_col = match_cols[-1]
@@ -27,6 +51,10 @@ class ValueTranslator:
         return row
 
     def translate(self, df):
+        """Given a datafram, do a batch translation for each translation table we have.
+
+        Returns: None (Modifies the dataframe in-place)
+        """
         for (match_cols, vtt) in self.translation_tables.items():
             vtt.translate(df, match_cols)
 
