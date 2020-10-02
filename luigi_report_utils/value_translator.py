@@ -2,6 +2,7 @@ import csv
 
 from collections import OrderedDict
 
+from . import parallel
 
 class ValueTranslator:
     """Wraps a set of ValueTranstionTable objects and provides
@@ -70,6 +71,10 @@ class ValueTranslationTable:
         self.strict = strict
 
     def translate(self, df, match_cols):
+        """Given a DataFrame and corresponding column names, will apply a translation
+        for rows in the DataFrame where the columns specified in `match_cols` contain
+        values that are also in `valmap`
+        """
         def build_match_cond(match_vals):
             match_cond = df[match_cols[0]].eq(match_vals[0])
             for (col, val) in zip(match_cols[1:], match_vals[1:]):
@@ -78,16 +83,31 @@ class ValueTranslationTable:
 
         newval_col = match_cols[-1]
 
-        # Construct a list of all assignments we want to make before we do
-        # any assignments. This is to avoid an accidental double translation.
-        defered_assignments = []
-        for (match_vals, new_val) in self.valmap.items():
-            idx = df.index[build_match_cond(match_vals)]
-            if idx.size > 0:
-                defered_assignments.append((idx, newval_col, new_val))
+        # If there are more entries in the DataFrame than in our value map:
+        #   build a list of defered assignments by iterating over the value map
+        # If there are more entries in the value map than are in the DataFrame:
+        #   iterate over the rows of the DataFrame and compare the appropriate columns to valmap
+        #   translating the value if matching
+        if df.shape[0] > len(self.valmap):
+            # Construct a list of all assignments we want to make before we do
+            # any assignments. This is to avoid an accidental double translation.
+            defered_assignments = []
 
-        for (idx, col, val) in defered_assignments:
-            df.loc[idx, [col]] = val
+            for (match_vals, new_val) in self.valmap.items():
+                idx = df.index[build_match_cond(match_vals)]
+                if idx.size > 0:
+                    defered_assignments.append((idx, newval_col, new_val))
+
+            for (idx, col, val) in defered_assignments:
+                df.loc[idx, [col]] = val
+        else:
+            def _process_row(row):
+                values = tuple((row[c] for c in match_cols))
+                res = self.valmap.get(values)
+                if res is not None:
+                    row[newval_col] = res
+
+            df[list(match_cols)] = parallel.df_apply(df[list(match_cols)], _process_row)
 
 
 def load_from_csv(_in, match_cols=("old-val",), newval_col="new-val", strict=None):

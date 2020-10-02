@@ -53,6 +53,20 @@ class TestVTT(unittest.TestCase):
             pandas.DataFrame({"A": range(10), "B": range(10, 0, -1)}, dtype=str), df,
         )
 
+    def test_vtt_large(self):
+        df = pandas.DataFrame({"A": range(10), "B": range(10)}, dtype=str)
+
+        df_vtt = pandas.DataFrame({"old-val": range(100), "new-val": range(100,0,-1)}, dtype=str)
+
+        vt = value_translator.ValueTranslator()
+        vt.add_vtt("B", value_translator.load_from_df(df_vtt))
+        vt.translate(df)
+
+        pandas.testing.assert_frame_equal(
+            pandas.DataFrame({"A": range(10), "B": range(100, 100-10, -1)}, dtype=str),
+            df,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
