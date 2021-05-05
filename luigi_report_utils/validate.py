@@ -10,7 +10,7 @@ logger = logging.getLogger(f"{__package__}.validate")
 
 def xref_integrity(df_left, on_left, df_right, on_right, ignore_blanks=False):
     """
-    Given to dataframes, df_left and df_right, and their respective tuples of key columns, check_xref
+    Given two dataframes, df_left and df_right, and their respective tuples of key columns, check_xref
     will return a list of any records whose set of keys are found in the left dataframe only.
     """
 
@@ -22,7 +22,7 @@ def xref_integrity(df_left, on_left, df_right, on_right, ignore_blanks=False):
     failure_label = "xref_integrity[{} == {}]".format(",".join(on_left), ",".join(on_right))
 
     # Combine the two dataframes trying to match rows together based on the given columns
-    # TODO: support colliding column names, remove suffuxes=(False, False), and make sure we
+    # TODO: support colliding column names, remove suffixes=(False, False), and make sure we
     # don't drop a column from the right-hand side that was also in the left-hand side.
     df = pandas.merge(
         df_left,
@@ -35,7 +35,7 @@ def xref_integrity(df_left, on_left, df_right, on_right, ignore_blanks=False):
         indicator=True,
     )
 
-    # We're only interested in the "failures". Find rows that were
+    # We're only interested in the failures. Find rows that were
     # only on the left-hand side.
     df = df.loc[df["_merge"].eq("left_only")]
 
