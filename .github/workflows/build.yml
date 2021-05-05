@@ -24,9 +24,9 @@ jobs:
     - name: Install etlcmd
       run: |
         mkdir -p $GITHUB_WORKSPACE/bin
-        echo "::add-path::$GITHUB_WORKSPACE/bin"
+        echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
         sudo apt-get install wget
-        wget -O $GITHUB_WORKSPACE/bin/etlcmd https://github.com/samhug/etlcmd/releases/download/v0.3.7/etlcmd_linux_amd64
+        wget -O $GITHUB_WORKSPACE/bin/etlcmd https://github.com/samhug/etlcmd/releases/download/v0.3.9/etlcmd_linux_amd64
         chmod +x $GITHUB_WORKSPACE/bin/etlcmd
     - name: Lint with flake8
       run: |
