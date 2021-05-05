@@ -25,8 +25,8 @@ def xref_integrity(df_left, on_left, df_right, on_right, ignore_blanks=False):
     # TODO: support colliding column names, remove suffixes=(False, False), and make sure we
     # don't drop a column from the right-hand side that was also in the left-hand side.
     df = pandas.merge(
-        df_left,
-        df_right,
+        df_left[on_left],
+        df_right[on_right],
         how="outer",
         left_on=on_left,
         right_on=on_right,
@@ -40,7 +40,8 @@ def xref_integrity(df_left, on_left, df_right, on_right, ignore_blanks=False):
     df = df.loc[df["_merge"].eq("left_only")]
 
     # Drop the special _merge column and the user specified 'on_right' columns that were merged in.
-    df.drop(columns=["_merge"] + on_right, inplace=True)
+    on_right_uniq = [elem for elem in on_right if elem not in on_left]
+    df.drop(columns=["_merge"] + on_right_uniq, inplace=True)
 
     # Don't fail records where the keys are just blank if thats
     # what the user wants
