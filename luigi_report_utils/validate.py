@@ -25,8 +25,8 @@ def xref_integrity(df_left, on_left, df_right, on_right, ignore_blanks=False):
     # TODO: support colliding column names, remove suffixes=(False, False), and make sure we
     # don't drop a column from the right-hand side that was also in the left-hand side.
     df = pandas.merge(
-        df_left[on_left],
-        df_right[on_right],
+        df_left,
+        df_right,
         how="outer",
         left_on=on_left,
         right_on=on_right,
